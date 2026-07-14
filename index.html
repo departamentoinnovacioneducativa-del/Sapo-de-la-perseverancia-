@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RanaProductiva - Rutina & Pomodoro</title>
+    
+    <!-- ==========================================
+         INSTRUCCIONES PARA GITHUB PAGES (PWA)
+         ==========================================
+         1. Sube estos 5 archivos (index.html, styles.css, script.js, manifest.json, sw.js) 
+            y tu imagen "sapo.jpg" a un repositorio en GitHub.
+         2. Ve a Settings > Pages en tu repositorio.
+         3. En "Source", selecciona la rama "main" y la carpeta "/root".
+         4. Guarda. GitHub te dará una URL (https://tuusuario.github.io/tu-repo/).
+         5. IMPORTANCIA DEL HTTPS: GitHub Pages sirve contenido sobre HTTPS por defecto.
+            Esto es OBLIGATORIO para que el Service Worker (sw.js) funcione, 
+            ya que los navegadores bloquean SW en conexiones inseguras (HTTP) 
+            por razones de seguridad. También es requisito para la Web Notifications API.
+    ========================================== -->
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00e676">
+    <link rel="icon" href="sapo.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="sapo.jpg">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="sapo.jpg" alt="Logo Sapo" class="logo">
+            <h1>RanaProductiva</h1>
+        </div>
+        <div class="gamification-stats">
+            <div class="stat" id="streak-display">🔥 Racha: 0 días</div>
+            <div class="stat" id="freezes-display">🧊 Congelamientos: 0</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Espacio reservado para ilustración de portada -->
+        <section class="hero-section">
+            <div class="illustration-placeholder">
+                <p>[ ESPACIO RESERVADO PARA ILUSTRACIÓN DE SAPO KAWAII DEPORTISTA ]</p>
+            </div>
+        </section>
+
+        <!-- Sección de Rutina 20/20/20 -->
+        <section class="card">
+            <h2>Rutina Matutina (20/20/20)</h2>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="exercise">🏃 Ejercicio</button>
+                <button class="tab-btn" data-tab="meditation">🧘 Meditación</button>
+                <button class="tab-btn" data-tab="reading">📖 Lectura</button>
+            </div>
+            
+            <div class="timer-container">
+                <div id="routine-timer-display" class="timer-display">20:00</div>
+                <div class="timer-controls">
+                    <button id="routine-start-btn" class="btn-primary">Iniciar</button>
+                    <button id="routine-pause-btn" class="btn-secondary">Pausar</button>
+                    <button id="routine-reset-btn" class="btn-secondary">Reiniciar</button>
+                </div>
+                <button id="quick-5-btn" class="btn-quick">Rutina Rápida 5 min (Congelar Racha)</button>
+            </div>
+        </section>
+
+        <!-- Sección Pomodoro -->
+        <section class="card">
+            <h2>Pomodoro</h2>
+            <div class="pomodoro-modes">
+                <button class="mode-btn active" data-mode="work">Trabajo (25m)</button>
+                <button class="mode-btn" data-mode="break">Descanso (5m)</button>
+            </div>
+            <div class="timer-container">
+                <div id="pomodoro-timer-display" class="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button id="pomodoro-start-btn" class="btn-primary">Iniciar</button>
+                    <button id="pomodoro-pause-btn" class="btn-secondary">Pausar</button>
+                    <button id="pomodoro-reset-btn" class="btn-secondary">Reiniciar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Notificaciones y Medallas -->
+        <section class="card">
+            <h2>Medallas y Recordatorios</h2>
+            <button id="enable-notifications-btn" class="btn-primary">Activar Notificaciones</button>
+            <div class="badges-container" id="badges-container">
+                <!-- Las medallas se inyectan aquí por JS -->
+            </div>
+        </section>
+
+        <!-- Bitácora -->
+        <section class="card">
+            <h2>Bitácora Diaria</h2>
+            <div id="log-list" class="log-list">
+                <!-- Historial inyectado por JS -->
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
