@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rana-productiva-v1';
+const CACHE_NAME = 'rana-productiva-v2'; // Versión actualizada
 const urlsToCache = [
     './',
     './index.html',
@@ -8,7 +8,6 @@ const urlsToCache = [
     './sapo.jpg'
 ];
 
-// Evento Install: Cachear archivos principales
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -20,7 +19,6 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// Evento Activate: Limpiar cachés antiguas
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -37,20 +35,16 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Evento Fetch: Servir desde caché (App Shell)
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                if (response) {
-                    return response; // Devolver de caché
-                }
-                return fetch(event.request); // Devolver de red
+                if (response) return response;
+                return fetch(event.request);
             })
     );
 });
 
-// Evento Push (Reservado para futuras notificaciones Push del servidor)
 self.addEventListener('push', event => {
     const title = 'RanaProductiva';
     const options = {
