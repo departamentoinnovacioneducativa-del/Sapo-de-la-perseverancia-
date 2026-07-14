@@ -8,8 +8,8 @@
     <!-- ==========================================
          INSTRUCCIONES PARA GITHUB PAGES (PWA)
          ==========================================
-         1. Sube estos 5 archivos (index.html, styles.css, script.js, manifest.json, sw.js) 
-            y tu imagen "sapo.jpg" a un repositorio en GitHub.
+         1. Sube estos archivos (index.html, styles.css, script.js, manifest.json, sw.js), 
+            tu imagen "sapo.jpg" y tu archivo de música "oriental.mp3" a un repositorio en GitHub.
          2. Ve a Settings > Pages en tu repositorio.
          3. En "Source", selecciona la rama "main" y la carpeta "/root".
          4. Guarda. GitHub te dará una URL (https://tuusuario.github.io/tu-repo/).
@@ -29,6 +29,16 @@
     <!-- Contenedor para el efecto de hojas de cerezo -->
     <div id="petals-container"></div>
 
+    <!-- Reproductor de Música -->
+    <div id="music-player">
+        <audio id="bg-audio" loop>
+            <!-- Coloca tu archivo de música oriental relajante como "oriental.mp3" en la misma carpeta -->
+            <source src="oriental.mp3" type="audio/mpeg">
+            Tu navegador no soporta audio.
+        </audio>
+        <button id="music-toggle-btn" class="btn-secondary">🎵 Música</button>
+    </div>
+
     <!-- Modal de Bienvenida (Preguntar Nombre) -->
     <div id="welcome-modal" class="modal-overlay">
         <div class="modal-content">
@@ -46,7 +56,7 @@
             <h1>RanaProductiva</h1>
         </div>
         <div class="header-controls">
-            <button id="theme-toggle-btn" class="btn-secondary">☀️</button>
+            <button id="theme-toggle-btn" class="btn-secondary">🌙</button>
             <div class="gamification-stats">
                 <div class="stat" id="streak-display">🔥 Racha: 0 días</div>
                 <div class="stat" id="freezes-display">🧊 Congelamientos: 0</div>
@@ -64,6 +74,36 @@
         <!-- Imagen de portada -->
         <section class="hero-section">
             <img src="sapo.jpg" alt="Sapo Kawaii Deportista" class="hero-img">
+        </section>
+
+        <!-- Sección de Herramientas de Productividad -->
+        <section class="card">
+            <h2>🛠️ Herramientas de Productividad</h2>
+            <div class="tabs">
+                <button class="tool-btn active" data-tool="stopwatch">⏱️ Cronómetro</button>
+                <button class="tool-btn" data-tool="tasks">✅ Tareas</button>
+            </div>
+            
+            <!-- Cronómetro -->
+            <div id="stopwatch-tool" class="tool-content">
+                <div class="timer-container">
+                    <div id="stopwatch-display" class="timer-display">00:00:00</div>
+                    <div class="timer-controls">
+                        <button id="sw-start-btn" class="btn-primary">Iniciar</button>
+                        <button id="sw-stop-btn" class="btn-secondary">Detener</button>
+                        <button id="sw-reset-btn" class="btn-secondary">Reiniciar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Tareas -->
+            <div id="tasks-tool" class="tool-content hidden">
+                <div class="task-input-container">
+                    <input type="text" id="task-input" placeholder="Añadir nueva tarea...">
+                    <button id="add-task-btn" class="btn-primary">+</button>
+                </div>
+                <ul id="task-list" class="task-list"></ul>
+            </div>
         </section>
 
         <!-- Sección de Rutina 20/20/20 -->
@@ -107,17 +147,18 @@
         <section class="card">
             <h2>Medallas y Recordatorios</h2>
             <button id="enable-notifications-btn" class="btn-primary">Activar Notificaciones</button>
-            <div class="badges-container" id="badges-container">
-                <!-- Las medallas se inyectan aquí por JS -->
-            </div>
+            
+            <h3 class="badge-subtitle">Logros Fijos</h3>
+            <div class="badges-container" id="badges-container"></div>
+            
+            <h3 class="badge-subtitle">Logros de Racha (Largo Plazo)</h3>
+            <div class="badges-container" id="milestones-container"></div>
         </section>
 
         <!-- Bitácora -->
         <section class="card">
             <h2>Bitácora Diaria</h2>
-            <div id="log-list" class="log-list">
-                <!-- Historial inyectado por JS -->
-            </div>
+            <div id="log-list" class="log-list"></div>
         </section>
     </main>
 
