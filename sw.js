@@ -1,13 +1,15 @@
-const CACHE_NAME = 'rana-productiva-v2'; // Versión actualizada
+const CACHE_NAME = 'rana-productiva-v4'; // Versión actualizada para forzar el refresco de caché
 const urlsToCache = [
     './',
     './index.html',
     './styles.css',
     './script.js',
     './manifest.json',
-    './sapo.jpg'
+    './sapo.jpg',
+    './oriental.mp3' // Añadida la música oriental al caché para offline
 ];
 
+// Evento Install: Cachear archivos principales
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -15,10 +17,14 @@ self.addEventListener('install', event => {
                 console.log('Cache abierto');
                 return cache.addAll(urlsToCache);
             })
+            .catch(error => {
+                console.error('Error al cachear en SW:', error);
+            })
     );
     self.skipWaiting();
 });
 
+// Evento Activate: Limpiar cachés antiguas
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -35,16 +41,21 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
+// Evento Fetch: Servir desde caché (App Shell) o red
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                if (response) return response;
+                // Devolver del caché si existe, sino ir a la red
+                if (response) {
+                    return response;
+                }
                 return fetch(event.request);
             })
     );
 });
 
+// Evento Push (Para notificaciones futuras desde servidor)
 self.addEventListener('push', event => {
     const title = 'RanaProductiva';
     const options = {
