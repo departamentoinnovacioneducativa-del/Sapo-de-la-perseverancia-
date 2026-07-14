@@ -421,4 +421,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const audio = document.getElementById('bg-audio');
     audio.volume = 0.3; // Volumen relajante
     document.getElementById('music-toggle-btn').addEventListener('click', () => {
-        if (audio
+        if (audio.paused) {
+            audio.play().catch(e => console.log("Autoplay bloqueado, intentar de nuevo."));
+        } else {
+            audio.pause();
+        }
+    });
+
+    // Herramientas Tabs
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const tool = e.target.dataset.tool;
+            document.getElementById('stopwatch-tool').classList.toggle('hidden', tool !== 'stopwatch');
+            document.getElementById('tasks-tool').classList.toggle('hidden', tool !== 'tasks');
+        });
+    });
+
+    // Cronómetro
+    document.getElementById('sw-start-btn').addEventListener('click', startStopwatch);
+    document.getElementById('sw-stop-btn').addEventListener('click', stopStopwatch);
+    document.getElementById('sw-reset-btn').addEventListener('click', resetStopwatch);
+
+    // Tareas
+    document.getElementById('add-task-btn').addEventListener('click', () => {
+        const input = document.getElementById('task-input');
+        if(input.value.trim() !== '') {
+            appData.tasks.push({ text: input.value.trim(), done: false });
+            input.value = '';
+            saveData();
+            renderTasks();
+        }
+    });
+    document.getElementById('task-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('add-task-btn').click();
+    });
+
+    // Rutina
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentRoutineTab = e.target.dataset.tab;
+            resetRoutine();
+        });
+    });
+    document.getElementById('routine-start-btn').addEventListener('click', startRoutine);
+    document.getElementById('routine-pause-btn').addEventListener('click', () => clearInterval(routineInterval));
+    document.getElementById('routine-reset-btn').addEventListener('click', () => resetRoutine());
+    document.getElementById('quick-5-btn').addEventListener('click', startQuick5);
+
+    // Pomodoro
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => switchPomodoroMode(e.target.dataset.mode));
+    });
+    document.getElementById('pomodoro-start-btn').addEventListener('click', startPomodoro);
+    document.getElementById('pomodoro-pause-btn').addEventListener('click', () => clearInterval(pomodoroInterval));
+    document.getElementById('pomodoro-reset-btn').addEventListener('click', () => switchPomodoroMode(pomodoroMode));
+
+    document.getElementById('enable-notifications-btn').addEventListener('click', requestNotificationPermission);
+
+    // SW
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registrado:', reg.scope))
+            .catch(err => console.error('Error al registrar SW:', err));
+    }
+});
