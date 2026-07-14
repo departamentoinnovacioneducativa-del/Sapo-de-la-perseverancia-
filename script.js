@@ -1,27 +1,30 @@
 // ==========================================
-// GESTIÓN DE DATOS (LocalStorage)
+// GESTIÓN DE DATOS (LocalStorage) - CON VALIDACIÓN SEGURA
 // ==========================================
-let appData = JSON.parse(localStorage.getItem('ranaData')) || {
-    userName: null,
-    theme: 'light', // Predefinido en light
-    streak: 0,
-    lastRoutineDate: null,
-    freezes: 0,
-    routineCompletedToday: { exercise: false, meditation: false, reading: false },
-    totalPomodoros: 0,
-    pomodorosToday: 0,
-    quickRoutinesDone: 0,
-    tasks: [],
-    badges: {
-        firstRoutine: false, streak3: false, pomodoroMaster: false, 
-        pomodoro10: false, freezeCollector: false, earlyBird: false, nightOwl: false,
-        // Logros de racha largos (cada 10 y especiales cada 30)
-        m10: false, m20: false, m30: false, m40: false, m50: false, m60: false, 
-        m90: false, m120: false, m150: false, m180: false, m210: false, 
-        m240: false, m270: false, m300: false, m330: false, m365: false
-    },
-    log: []
+let appData = JSON.parse(localStorage.getItem('ranaData')) || {};
+
+// Asegurar que todas las propiedades existan (evita errores al actualizar versiones)
+appData.userName = appData.userName || null;
+appData.theme = appData.theme || 'light';
+appData.streak = appData.streak || 0;
+appData.lastRoutineDate = appData.lastRoutineDate || null;
+appData.freezes = appData.freezes || 0;
+appData.routineCompletedToday = appData.routineCompletedToday || { exercise: false, meditation: false, reading: false };
+appData.totalPomodoros = appData.totalPomodoros || 0;
+appData.pomodorosToday = appData.pomodorosToday || 0;
+appData.quickRoutinesDone = appData.quickRoutinesDone || 0;
+appData.tasks = appData.tasks || []; // <-- Esto frena el error anterior
+appData.log = appData.log || [];
+
+// Badges con validación
+const defaultBadges = {
+    firstRoutine: false, streak3: false, pomodoroMaster: false, 
+    pomodoro10: false, freezeCollector: false, earlyBird: false, nightOwl: false,
+    m10: false, m20: false, m30: false, m40: false, m50: false, m60: false, 
+    m90: false, m120: false, m150: false, m180: false, m210: false, 
+    m240: false, m270: false, m300: false, m330: false, m365: false
 };
+appData.badges = { ...defaultBadges, ...(appData.badges || {}) };
 
 function saveData() {
     localStorage.setItem('ranaData', JSON.stringify(appData));
@@ -60,7 +63,7 @@ function setDailyMotivation() {
 // ==========================================
 function createPetals() {
     const container = document.getElementById('petals-container');
-    container.innerHTML = ''; // Limpiar por si acaso
+    container.innerHTML = ''; 
     for(let i=0; i<15; i++) {
         const petal = document.createElement('div');
         petal.classList.add('petal');
@@ -68,7 +71,6 @@ function createPetals() {
         petal.style.width = `${size}px`;
         petal.style.height = `${size}px`;
         petal.style.left = `${Math.random() * 100}vw`;
-        // Duración lenta: entre 12 y 22 segundos
         petal.style.animationDuration = `${Math.random() * 10 + 12}s`;
         petal.style.animationDelay = `${Math.random() * 10}s`;
         container.appendChild(petal);
@@ -115,7 +117,6 @@ function checkBadges() {
     if (!b.earlyBird && appData.routineCompletedToday.exercise && hour < 9) { b.earlyBird = true; addLog("🏅 ¡Medalla: Madrugador!"); }
     if (!b.nightOwl && appData.pomodorosToday >= 1 && hour >= 22) { b.nightOwl = true; addLog("🏅 ¡Medalla: Nocturno!"); }
     
-    // Sistema de Logros Largos (10, 20, 30... 365)
     const milestones = [10, 20, 30, 40, 50, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
     milestones.forEach(m => {
         if (appData.streak >= m && !b[`m${m}`]) {
@@ -130,7 +131,7 @@ function checkBadges() {
 }
 
 // ==========================================
-// TEMPORIZADORES (Rutina y Pomodoro)
+// TEMPORIZADORES
 // ==========================================
 let routineInterval, pomodoroInterval, stopwatchInterval;
 let routineSeconds = 20 * 60;
@@ -253,7 +254,11 @@ function resetStopwatch() {
 
 function renderTasks() {
     const list = document.getElementById('task-list');
+    if (!list) return; // Medida de seguridad
     list.innerHTML = '';
+    
+    if (!appData.tasks || appData.tasks.length === 0) return;
+    
     appData.tasks.forEach((task, index) => {
         const li = document.createElement('li');
         li.className = `task-item ${task.done ? 'done' : ''}`;
@@ -307,65 +312,68 @@ function updateUI() {
     document.getElementById('streak-display').innerText = `🔥 Racha: ${appData.streak} días`;
     document.getElementById('freezes-display').innerText = `🧊 Congelamientos: ${appData.freezes}`;
     
-    // Medallas Fijas
     const badgesContainer = document.getElementById('badges-container');
-    badgesContainer.innerHTML = '';
-    const badgesDef = [
-        { id: 'firstRoutine', icon: '🥇', name: '1ra Rutina' },
-        { id: 'streak3', icon: '🔥', name: '3 Días' },
-        { id: 'pomodoroMaster', icon: '🍅', name: '1er Pomodoro' },
-        { id: 'pomodoro10', icon: '⏳', name: '10 Pomodoros' },
-        { id: 'freezeCollector', icon: '🧊', name: '3 Congelamientos' },
-        { id: 'earlyBird', icon: '🌅', name: 'Madrugador' },
-        { id: 'nightOwl', icon: '🦉', name: 'Nocturno' }
-    ];
-    badgesDef.forEach(b => {
-        const div = document.createElement('div');
-        div.className = `badge ${appData.badges[b.id] ? 'unlocked' : ''}`;
-        div.innerHTML = `${b.icon}<small>${b.name}</small>`;
-        div.title = b.name;
-        badgesContainer.appendChild(div);
-    });
+    if (badgesContainer) {
+        badgesContainer.innerHTML = '';
+        const badgesDef = [
+            { id: 'firstRoutine', icon: '🥇', name: '1ra Rutina' },
+            { id: 'streak3', icon: '🔥', name: '3 Días' },
+            { id: 'pomodoroMaster', icon: '🍅', name: '1er Pomodoro' },
+            { id: 'pomodoro10', icon: '⏳', name: '10 Pomodoros' },
+            { id: 'freezeCollector', icon: '🧊', name: '3 Congelamientos' },
+            { id: 'earlyBird', icon: '🌅', name: 'Madrugador' },
+            { id: 'nightOwl', icon: '🦉', name: 'Nocturno' }
+        ];
+        badgesDef.forEach(b => {
+            const div = document.createElement('div');
+            div.className = `badge ${appData.badges[b.id] ? 'unlocked' : ''}`;
+            div.innerHTML = `${b.icon}<small>${b.name}</small>`;
+            div.title = b.name;
+            badgesContainer.appendChild(div);
+        });
+    }
 
-    // Medallas de Racha (Largo Plazo)
     const milestonesContainer = document.getElementById('milestones-container');
-    milestonesContainer.innerHTML = '';
-    const milestonesDef = [
-        { id: 'm10', icon: '🔟', name: '10 Días', special: false },
-        { id: 'm20', icon: '2️⃣0️⃣', name: '20 Días', special: false },
-        { id: 'm30', icon: '🌟', name: '30 Días', special: true },
-        { id: 'm40', icon: '4️⃣0️⃣', name: '40 Días', special: false },
-        { id: 'm50', icon: '5️⃣0️⃣', name: '50 Días', special: false },
-        { id: 'm60', icon: '💎', name: '60 Días', special: true },
-        { id: 'm90', icon: '👑', name: '90 Días', special: true },
-        { id: 'm120', icon: '🏰', name: '120 Días', special: true },
-        { id: 'm150', icon: '🌈', name: '150 Días', special: true },
-        { id: 'm180', icon: '⚡', name: '180 Días', special: true },
-        { id: 'm210', icon: '🚀', name: '210 Días', special: true },
-        { id: 'm240', icon: '🌠', name: '240 Días', special: true },
-        { id: 'm270', icon: '🦋', name: '270 Días', special: true },
-        { id: 'm300', icon: '🏆', name: '300 Días', special: true },
-        { id: 'm330', icon: '🌺', name: '330 Días', special: true },
-        { id: 'm365', icon: '🦸‍♂️', name: '1 Año!', special: true }
-    ];
-    milestonesDef.forEach(b => {
-        const div = document.createElement('div');
-        div.className = `badge ${appData.badges[b.id] ? 'unlocked' : ''} ${b.special ? 'special' : ''}`;
-        div.innerHTML = `${b.icon}<small>${b.name}</small>`;
-        div.title = b.name;
-        milestonesContainer.appendChild(div);
-    });
+    if (milestonesContainer) {
+        milestonesContainer.innerHTML = '';
+        const milestonesDef = [
+            { id: 'm10', icon: '🔟', name: '10 Días', special: false },
+            { id: 'm20', icon: '2️⃣0️⃣', name: '20 Días', special: false },
+            { id: 'm30', icon: '🌟', name: '30 Días', special: true },
+            { id: 'm40', icon: '4️⃣0️⃣', name: '40 Días', special: false },
+            { id: 'm50', icon: '5️⃣0️⃣', name: '50 Días', special: false },
+            { id: 'm60', icon: '💎', name: '60 Días', special: true },
+            { id: 'm90', icon: '👑', name: '90 Días', special: true },
+            { id: 'm120', icon: '🏰', name: '120 Días', special: true },
+            { id: 'm150', icon: '🌈', name: '150 Días', special: true },
+            { id: 'm180', icon: '⚡', name: '180 Días', special: true },
+            { id: 'm210', icon: '🚀', name: '210 Días', special: true },
+            { id: 'm240', icon: '🌠', name: '240 Días', special: true },
+            { id: 'm270', icon: '🦋', name: '270 Días', special: true },
+            { id: 'm300', icon: '🏆', name: '300 Días', special: true },
+            { id: 'm330', icon: '🌺', name: '330 Días', special: true },
+            { id: 'm365', icon: '🦸‍♂️', name: '1 Año!', special: true }
+        ];
+        milestonesDef.forEach(b => {
+            const div = document.createElement('div');
+            div.className = `badge ${appData.badges[b.id] ? 'unlocked' : ''} ${b.special ? 'special' : ''}`;
+            div.innerHTML = `${b.icon}<small>${b.name}</small>`;
+            div.title = b.name;
+            milestonesContainer.appendChild(div);
+        });
+    }
 
-    // Bitácora
     const logList = document.getElementById('log-list');
-    logList.innerHTML = '';
-    if(appData.log.length === 0) logList.innerHTML = '<p class="log-item">Aún no hay actividad.</p>';
-    appData.log.forEach(entry => {
-        const p = document.createElement('p');
-        p.className = 'log-item';
-        p.innerText = `[${entry.date} ${entry.time}] ${entry.message}`;
-        logList.appendChild(p);
-    });
+    if (logList) {
+        logList.innerHTML = '';
+        if(appData.log.length === 0) logList.innerHTML = '<p class="log-item">Aún no hay actividad.</p>';
+        appData.log.forEach(entry => {
+            const p = document.createElement('p');
+            p.className = 'log-item';
+            p.innerText = `[${entry.date} ${entry.time}] ${entry.message}`;
+            logList.appendChild(p);
+        });
+    }
 
     renderTasks();
 }
@@ -374,26 +382,7 @@ function updateUI() {
 // INICIALIZACIÓN Y EVENTOS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Aplicar tema guardado (predefinido light)
-    if (appData.theme === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-toggle-btn').innerText = '☀️';
-    } else {
-        document.getElementById('theme-toggle-btn').innerText = '🌙';
-    }
-
-    if (!appData.userName) {
-        document.getElementById('welcome-modal').classList.remove('hidden');
-    } else {
-        document.getElementById('welcome-modal').classList.add('hidden');
-    }
-
-    createPetals();
-    setDailyMotivation();
-    checkStreak();
-    updateUI();
-
-    // Modal
+    // 1. Asegurar registro de eventos PRIMERO (soluciona el bug)
     document.getElementById('save-name-btn').addEventListener('click', () => {
         const name = document.getElementById('name-input').value.trim();
         if(name) {
@@ -404,7 +393,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Theme Toggle
+    // 2. Aplicar tema
+    if (appData.theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-toggle-btn').innerText = '☀️';
+    } else {
+        document.getElementById('theme-toggle-btn').innerText = '🌙';
+    }
+
+    // 3. Mostrar modal si no hay nombre
+    if (!appData.userName) {
+        document.getElementById('welcome-modal').classList.remove('hidden');
+    } else {
+        document.getElementById('welcome-modal').classList.add('hidden');
+    }
+
+    // 4. Inicializar efectos y UI
+    createPetals();
+    setDailyMotivation();
+    checkStreak();
+    updateUI();
+
+    // Theme Toggle Event
     document.getElementById('theme-toggle-btn').addEventListener('click', (e) => {
         document.body.classList.toggle('dark-mode');
         if (document.body.classList.contains('dark-mode')) {
@@ -417,9 +427,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveData();
     });
 
-    // Música
+    // Música Event
     const audio = document.getElementById('bg-audio');
-    audio.volume = 0.3; // Volumen relajante
+    audio.volume = 0.3; 
     document.getElementById('music-toggle-btn').addEventListener('click', () => {
         if (audio.paused) {
             audio.play().catch(e => console.log("Autoplay bloqueado, intentar de nuevo."));
@@ -428,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Herramientas Tabs
+    // Herramientas Tabs Event
     document.querySelectorAll('.tool-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
@@ -439,12 +449,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Cronómetro
+    // Cronómetro Events
     document.getElementById('sw-start-btn').addEventListener('click', startStopwatch);
     document.getElementById('sw-stop-btn').addEventListener('click', stopStopwatch);
     document.getElementById('sw-reset-btn').addEventListener('click', resetStopwatch);
 
-    // Tareas
+    // Tareas Events
     document.getElementById('add-task-btn').addEventListener('click', () => {
         const input = document.getElementById('task-input');
         if(input.value.trim() !== '') {
@@ -458,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') document.getElementById('add-task-btn').click();
     });
 
-    // Rutina
+    // Rutina Events
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -472,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('routine-reset-btn').addEventListener('click', () => resetRoutine());
     document.getElementById('quick-5-btn').addEventListener('click', startQuick5);
 
-    // Pomodoro
+    // Pomodoro Events
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', (e) => switchPomodoroMode(e.target.dataset.mode));
     });
@@ -482,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('enable-notifications-btn').addEventListener('click', requestNotificationPermission);
 
-    // SW
+    // Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
             .then(reg => console.log('Service Worker registrado:', reg.scope))
