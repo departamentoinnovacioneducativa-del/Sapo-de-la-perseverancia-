@@ -1,11 +1,12 @@
+// manifest.json
 {
     "name": "RanaProductiva - Rutina y Pomodoro",
     "short_name": "RanaApp",
     "description": "App web para rutina 20/20/20, Pomodoro y gamificación de productividad.",
     "start_url": "./index.html",
     "display": "standalone",
-    "background_color": "#121212",
-    "theme_color": "#00e676",
+    "background_color": "#ffffff",
+    "theme_color": "#00b248",
     "orientation": "portrait-primary",
     "icons": [
         {
