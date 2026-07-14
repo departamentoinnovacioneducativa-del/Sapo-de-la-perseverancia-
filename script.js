@@ -3,7 +3,7 @@
 // ==========================================
 let appData = JSON.parse(localStorage.getItem('ranaData')) || {
     userName: null,
-    theme: 'dark',
+    theme: 'light', // Predefinido en light
     streak: 0,
     lastRoutineDate: null,
     freezes: 0,
@@ -11,10 +11,14 @@ let appData = JSON.parse(localStorage.getItem('ranaData')) || {
     totalPomodoros: 0,
     pomodorosToday: 0,
     quickRoutinesDone: 0,
+    tasks: [],
     badges: {
-        firstRoutine: false, streak3: false, streak7: false, 
-        pomodoroMaster: false, pomodoro10: false, freezeCollector: false, 
-        earlyBird: false, nightOwl: false
+        firstRoutine: false, streak3: false, pomodoroMaster: false, 
+        pomodoro10: false, freezeCollector: false, earlyBird: false, nightOwl: false,
+        // Logros de racha largos (cada 10 y especiales cada 30)
+        m10: false, m20: false, m30: false, m40: false, m50: false, m60: false, 
+        m90: false, m120: false, m150: false, m180: false, m210: false, 
+        m240: false, m270: false, m300: false, m330: false, m365: false
     },
     log: []
 };
@@ -28,7 +32,7 @@ function addLog(message) {
     const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const date = new Date().toLocaleDateString('es-ES');
     appData.log.unshift({ date, time, message });
-    if(appData.log.length > 30) appData.log.pop(); // Limitar bitácora
+    if(appData.log.length > 30) appData.log.pop();
     saveData();
 }
 
@@ -52,10 +56,11 @@ function setDailyMotivation() {
 }
 
 // ==========================================
-// EFECTO HOJAS DE CEREZO
+// EFECTO HOJAS DE CEREZO (LENTO)
 // ==========================================
 function createPetals() {
     const container = document.getElementById('petals-container');
+    container.innerHTML = ''; // Limpiar por si acaso
     for(let i=0; i<15; i++) {
         const petal = document.createElement('div');
         petal.classList.add('petal');
@@ -63,8 +68,9 @@ function createPetals() {
         petal.style.width = `${size}px`;
         petal.style.height = `${size}px`;
         petal.style.left = `${Math.random() * 100}vw`;
-        petal.style.animationDuration = `${Math.random() * 5 + 5}s`;
-        petal.style.animationDelay = `${Math.random() * 5}s`;
+        // Duración lenta: entre 12 y 22 segundos
+        petal.style.animationDuration = `${Math.random() * 10 + 12}s`;
+        petal.style.animationDelay = `${Math.random() * 10}s`;
         container.appendChild(petal);
     }
 }
@@ -99,34 +105,51 @@ function checkBadges() {
     const hour = new Date().getHours();
 
     if (!b.firstRoutine && appData.routineCompletedToday.exercise && appData.routineCompletedToday.meditation && appData.routineCompletedToday.reading) {
-        b.firstRoutine = true;
-        addLog("🏅 ¡Medalla: Primera Rutina!");
+        b.firstRoutine = true; addLog("🏅 ¡Medalla: Primera Rutina!");
         sendNotification("¡Medalla Desbloqueada!", "Has completado tu primera rutina 20/20/20");
     }
     if (!b.streak3 && appData.streak >= 3) { b.streak3 = true; addLog("🏅 ¡Medalla: Racha de 3 días!"); }
-    if (!b.streak7 && appData.streak >= 7) { b.streak7 = true; addLog("🏅 ¡Medalla: Racha de 7 días!"); }
     if (!b.pomodoroMaster && appData.totalPomodoros >= 1) { b.pomodoroMaster = true; addLog("🏅 ¡Medalla: Primer Pomodoro!"); }
     if (!b.pomodoro10 && appData.totalPomodoros >= 10) { b.pomodoro10 = true; addLog("🏅 ¡Medalla: 10 Pomodoros totales!"); }
     if (!b.freezeCollector && appData.quickRoutinesDone >= 3) { b.freezeCollector = true; addLog("🏅 ¡Medalla: Coleccionista de Congelamientos!"); }
     if (!b.earlyBird && appData.routineCompletedToday.exercise && hour < 9) { b.earlyBird = true; addLog("🏅 ¡Medalla: Madrugador!"); }
     if (!b.nightOwl && appData.pomodorosToday >= 1 && hour >= 22) { b.nightOwl = true; addLog("🏅 ¡Medalla: Nocturno!"); }
     
+    // Sistema de Logros Largos (10, 20, 30... 365)
+    const milestones = [10, 20, 30, 40, 50, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
+    milestones.forEach(m => {
+        if (appData.streak >= m && !b[`m${m}`]) {
+            b[`m${m}`] = true;
+            const isSpecial = m % 30 === 0;
+            addLog(isSpecial ? `🌟 ¡LOGRO ESPECIAL DESBLOQUEADO: ${m} días! 🌟` : `🏆 ¡Logro desbloqueado: ${m} días de racha!`);
+            sendNotification(isSpecial ? "¡Logro Especial!" : "¡Nuevo Logro!", `Has alcanzado ${m} días de racha.`);
+        }
+    });
+    
     saveData();
 }
 
 // ==========================================
-// TEMPORIZADORES
+// TEMPORIZADORES (Rutina y Pomodoro)
 // ==========================================
-let routineInterval, pomodoroInterval;
+let routineInterval, pomodoroInterval, stopwatchInterval;
 let routineSeconds = 20 * 60;
 let currentRoutineTab = 'exercise';
 let pomodoroSeconds = 25 * 60;
 let pomodoroMode = 'work';
+let stopwatchSeconds = 0;
 
 function formatTime(seconds) {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = Math.floor(seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+}
+
+function formatStopwatch(seconds) {
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
 }
 
 function startRoutine() {
@@ -146,7 +169,6 @@ function completeRoutine() {
     if (routineSeconds <= 0) {
         appData.routineCompletedToday[currentRoutineTab] = true;
         addLog(`✅ Completado: 20 min de ${currentRoutineTab}`);
-        
         if (appData.routineCompletedToday.exercise && appData.routineCompletedToday.meditation && appData.routineCompletedToday.reading) {
             appData.streak++;
             addLog("🔥 ¡Racha incrementada! Día completado.");
@@ -178,9 +200,6 @@ function startQuick5() {
     }, 5 * 60 * 1000 + 1000);
 }
 
-// ==========================================
-// POMODORO
-// ==========================================
 function startPomodoro() {
     clearInterval(pomodoroInterval);
     pomodoroInterval = setInterval(() => {
@@ -215,6 +234,50 @@ function switchPomodoroMode(mode) {
 }
 
 // ==========================================
+// HERRAMIENTAS: CRONÓMETRO Y TAREAS
+// ==========================================
+function startStopwatch() {
+    clearInterval(stopwatchInterval);
+    stopwatchInterval = setInterval(() => {
+        stopwatchSeconds++;
+        document.getElementById('stopwatch-display').innerText = formatStopwatch(stopwatchSeconds);
+    }, 1000);
+}
+
+function stopStopwatch() { clearInterval(stopwatchInterval); }
+function resetStopwatch() {
+    stopStopwatch();
+    stopwatchSeconds = 0;
+    document.getElementById('stopwatch-display').innerText = "00:00:00";
+}
+
+function renderTasks() {
+    const list = document.getElementById('task-list');
+    list.innerHTML = '';
+    appData.tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.done ? 'done' : ''}`;
+        li.innerHTML = `
+            <span onclick="toggleTask(${index})" style="cursor:pointer; flex:1;">${task.text}</span>
+            <button class="del-btn" onclick="deleteTask(${index})">❌</button>
+        `;
+        list.appendChild(li);
+    });
+}
+
+function toggleTask(index) {
+    appData.tasks[index].done = !appData.tasks[index].done;
+    saveData();
+    renderTasks();
+}
+
+function deleteTask(index) {
+    appData.tasks.splice(index, 1);
+    saveData();
+    renderTasks();
+}
+
+// ==========================================
 // NOTIFICACIONES Y UI
 // ==========================================
 function requestNotificationPermission() {
@@ -234,7 +297,6 @@ function sendNotification(title, body) {
 }
 
 function updateUI() {
-    // Saludo
     const hour = new Date().getHours();
     let greeting = "¡Bienvenido!";
     if (hour < 12) greeting = "Buenos días";
@@ -245,13 +307,12 @@ function updateUI() {
     document.getElementById('streak-display').innerText = `🔥 Racha: ${appData.streak} días`;
     document.getElementById('freezes-display').innerText = `🧊 Congelamientos: ${appData.freezes}`;
     
-    // Medallas (Muchas más)
+    // Medallas Fijas
     const badgesContainer = document.getElementById('badges-container');
     badgesContainer.innerHTML = '';
     const badgesDef = [
         { id: 'firstRoutine', icon: '🥇', name: '1ra Rutina' },
         { id: 'streak3', icon: '🔥', name: '3 Días' },
-        { id: 'streak7', icon: '🏆', name: '7 Días' },
         { id: 'pomodoroMaster', icon: '🍅', name: '1er Pomodoro' },
         { id: 'pomodoro10', icon: '⏳', name: '10 Pomodoros' },
         { id: 'freezeCollector', icon: '🧊', name: '3 Congelamientos' },
@@ -266,6 +327,35 @@ function updateUI() {
         badgesContainer.appendChild(div);
     });
 
+    // Medallas de Racha (Largo Plazo)
+    const milestonesContainer = document.getElementById('milestones-container');
+    milestonesContainer.innerHTML = '';
+    const milestonesDef = [
+        { id: 'm10', icon: '🔟', name: '10 Días', special: false },
+        { id: 'm20', icon: '2️⃣0️⃣', name: '20 Días', special: false },
+        { id: 'm30', icon: '🌟', name: '30 Días', special: true },
+        { id: 'm40', icon: '4️⃣0️⃣', name: '40 Días', special: false },
+        { id: 'm50', icon: '5️⃣0️⃣', name: '50 Días', special: false },
+        { id: 'm60', icon: '💎', name: '60 Días', special: true },
+        { id: 'm90', icon: '👑', name: '90 Días', special: true },
+        { id: 'm120', icon: '🏰', name: '120 Días', special: true },
+        { id: 'm150', icon: '🌈', name: '150 Días', special: true },
+        { id: 'm180', icon: '⚡', name: '180 Días', special: true },
+        { id: 'm210', icon: '🚀', name: '210 Días', special: true },
+        { id: 'm240', icon: '🌠', name: '240 Días', special: true },
+        { id: 'm270', icon: '🦋', name: '270 Días', special: true },
+        { id: 'm300', icon: '🏆', name: '300 Días', special: true },
+        { id: 'm330', icon: '🌺', name: '330 Días', special: true },
+        { id: 'm365', icon: '🦸‍♂️', name: '1 Año!', special: true }
+    ];
+    milestonesDef.forEach(b => {
+        const div = document.createElement('div');
+        div.className = `badge ${appData.badges[b.id] ? 'unlocked' : ''} ${b.special ? 'special' : ''}`;
+        div.innerHTML = `${b.icon}<small>${b.name}</small>`;
+        div.title = b.name;
+        milestonesContainer.appendChild(div);
+    });
+
     // Bitácora
     const logList = document.getElementById('log-list');
     logList.innerHTML = '';
@@ -276,19 +366,22 @@ function updateUI() {
         p.innerText = `[${entry.date} ${entry.time}] ${entry.message}`;
         logList.appendChild(p);
     });
+
+    renderTasks();
 }
 
 // ==========================================
 // INICIALIZACIÓN Y EVENTOS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Aplicar tema guardado
-    if (appData.theme === 'light') {
-        document.body.classList.add('light-mode');
+    // Aplicar tema guardado (predefinido light)
+    if (appData.theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-toggle-btn').innerText = '☀️';
+    } else {
         document.getElementById('theme-toggle-btn').innerText = '🌙';
     }
 
-    // Verificar si ya hay nombre
     if (!appData.userName) {
         document.getElementById('welcome-modal').classList.remove('hidden');
     } else {
@@ -300,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStreak();
     updateUI();
 
-    // Eventos Modal
+    // Modal
     document.getElementById('save-name-btn').addEventListener('click', () => {
         const name = document.getElementById('name-input').value.trim();
         if(name) {
@@ -311,47 +404,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Evento Toggle Theme
+    // Theme Toggle
     document.getElementById('theme-toggle-btn').addEventListener('click', (e) => {
-        document.body.classList.toggle('light-mode');
-        if (document.body.classList.contains('light-mode')) {
-            appData.theme = 'light';
-            e.target.innerText = '🌙';
-        } else {
+        document.body.classList.toggle('dark-mode');
+        if (document.body.classList.contains('dark-mode')) {
             appData.theme = 'dark';
             e.target.innerText = '☀️';
+        } else {
+            appData.theme = 'light';
+            e.target.innerText = '🌙';
         }
         saveData();
     });
 
-    // Eventos Rutina
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentRoutineTab = e.target.dataset.tab;
-            resetRoutine();
-        });
-    });
-    document.getElementById('routine-start-btn').addEventListener('click', startRoutine);
-    document.getElementById('routine-pause-btn').addEventListener('click', () => clearInterval(routineInterval));
-    document.getElementById('routine-reset-btn').addEventListener('click', () => resetRoutine());
-    document.getElementById('quick-5-btn').addEventListener('click', startQuick5);
-
-    // Eventos Pomodoro
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => switchPomodoroMode(e.target.dataset.mode));
-    });
-    document.getElementById('pomodoro-start-btn').addEventListener('click', startPomodoro);
-    document.getElementById('pomodoro-pause-btn').addEventListener('click', () => clearInterval(pomodoroInterval));
-    document.getElementById('pomodoro-reset-btn').addEventListener('click', () => switchPomodoroMode(pomodoroMode));
-
-    document.getElementById('enable-notifications-btn').addEventListener('click', requestNotificationPermission);
-
-    // Registro del Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registrado:', reg.scope))
-            .catch(err => console.error('Error al registrar SW:', err));
-    }
-});
+    // Música
+    const audio = document.getElementById('bg-audio');
+    audio.volume = 0.3; // Volumen relajante
+    document.getElementById('music-toggle-btn').addEventListener('click', () => {
+        if (audio
