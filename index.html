@@ -26,23 +26,44 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Contenedor para el efecto de hojas de cerezo -->
+    <div id="petals-container"></div>
+
+    <!-- Modal de Bienvenida (Preguntar Nombre) -->
+    <div id="welcome-modal" class="modal-overlay">
+        <div class="modal-content">
+            <img src="sapo.jpg" alt="Sapo" class="modal-logo">
+            <h2>¡Hola! Soy Sapo</h2>
+            <p>¿Cómo te llamas? Personalicemos tu experiencia.</p>
+            <input type="text" id="name-input" placeholder="Tu nombre aquí">
+            <button id="save-name-btn" class="btn-primary">Empezar a triunfar</button>
+        </div>
+    </div>
+
     <header>
         <div class="logo-container">
             <img src="sapo.jpg" alt="Logo Sapo" class="logo">
             <h1>RanaProductiva</h1>
         </div>
-        <div class="gamification-stats">
-            <div class="stat" id="streak-display">🔥 Racha: 0 días</div>
-            <div class="stat" id="freezes-display">🧊 Congelamientos: 0</div>
+        <div class="header-controls">
+            <button id="theme-toggle-btn" class="btn-secondary">☀️</button>
+            <div class="gamification-stats">
+                <div class="stat" id="streak-display">🔥 Racha: 0 días</div>
+                <div class="stat" id="freezes-display">🧊 Congelamientos: 0</div>
+            </div>
         </div>
     </header>
 
     <main>
-        <!-- Espacio reservado para ilustración de portada -->
+        <!-- Saludo y Frase Motivacional -->
+        <section class="card greeting-card">
+            <h2 id="greeting-text">¡Bienvenido!</h2>
+            <p id="motivation-text" class="motivation">Cargando sabiduría...</p>
+        </section>
+
+        <!-- Imagen de portada -->
         <section class="hero-section">
-            <div class="illustration-placeholder">
-                <p>[ ESPACIO RESERVADO PARA ILUSTRACIÓN DE SAPO KAWAII DEPORTISTA ]</p>
-            </div>
+            <img src="sapo.jpg" alt="Sapo Kawaii Deportista" class="hero-img">
         </section>
 
         <!-- Sección de Rutina 20/20/20 -->
